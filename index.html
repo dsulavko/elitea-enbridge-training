@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELITEA Essentials Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060606;
+    --bg-2: #101114;
+    --card: #16181d;
+    --card-2: #1d2027;
+    --line: #2a2e38;
+    --text: #fbfafa;
+    --muted: #a0a0a0;
+    --cyan: #53e2fb;
+    --cyan-2: #00f6ff;
+    --green: #00f3ab;
+    --blue: #418dff;
+    --violet: #b896ff;
+    --magenta: #cb38bd;
+    --orange: #ffb054;
+    --bad: #ff6b7a;
+    --grad: linear-gradient(100deg, #24e1fa 0%, #418dff 35%, #cb38bd 70%, #ffb054 100%);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .86em; padding: 1px 7px; border-radius: 6px; background: #0c0d10; border: 1px solid var(--line); color: var(--cyan); white-space: nowrap; }
+
+  /* ---------- viewport + scaled stage ---------- */
+  #viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; background:
+      radial-gradient(900px 500px at 85% -10%, rgba(65,141,255,.16), transparent 60%),
+      radial-gradient(800px 500px at -5% 110%, rgba(203,56,189,.14), transparent 60%), var(--bg); }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+
+  /* ---------- path bar (top) ---------- */
+  #pathbar { position: absolute; left: 0; right: 0; top: 0; height: 64px; padding: 0 56px; display: flex; align-items: center; gap: 18px; transition: opacity .3s; }
+  #pathbar.hide { opacity: 0; pointer-events: none; }
+  #pathbar .mini-logo { height: 26px; opacity: .95; }
+  #pathbar .trail { flex: 1; display: flex; align-items: center; }
+  .pip { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px 6px; color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; border-radius: 999px; }
+  .pip i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); background: var(--bg-2); font-size: 12px; transition: all .3s; }
+  .pip.done i { background: var(--green); border-color: var(--green); color: #00281c; }
+  .pip.now { color: var(--text); }
+  .pip.now i { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(83,226,251,.18); color: var(--cyan); }
+  .pip.done.now i { color: #00281c; }
+  .seg { flex: 1; height: 2px; background: var(--line); margin: 0 4px; min-width: 14px; position: relative; }
+  .seg.done { background: var(--green); }
+
+  /* ---------- slides ---------- */
+  .slide { position: absolute; inset: 76px 56px 28px; opacity: 0; visibility: hidden; transform: translateX(28px); transition: opacity .35s, transform .35s, visibility 0s .35s; display: flex; flex-direction: column; }
+  .slide.active { opacity: 1; visibility: visible; transform: none; transition: opacity .35s, transform .35s; }
+  .slide.before { transform: translateX(-28px); }
+  .kicker { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 10px; }
+  .kicker b { background: var(--grad); color: #04121a; border-radius: 999px; padding: 3px 12px; letter-spacing: .06em; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 64px; line-height: 1.04; font-weight: 800; letter-spacing: -.02em; }
+  h2 { font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -.015em; margin-bottom: 8px; }
+  h3 { font-size: 21px; font-weight: 700; margin-bottom: 8px; }
+  .lead { font-size: 21px; color: #cfd3da; line-height: 1.5; max-width: 900px; }
+  .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .muted { color: var(--muted); }
+  .body { flex: 1; min-height: 0; display: flex; gap: 28px; margin-top: 18px; }
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .col.narrow { flex: .8; } .col.wide { flex: 1.35; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .card h3 { margin-bottom: 6px; font-size: 20px; }
+  .card p, .card li { font-size: 16px; color: #c4c8d0; line-height: 1.45; }
+  .card.hl { border-color: rgba(83,226,251,.45); background: linear-gradient(180deg, rgba(83,226,251,.07), var(--card)); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--cyan); margin-bottom: 8px; }
+  .tag.g { color: var(--green); } .tag.v { color: var(--violet); } .tag.o { color: var(--orange); }
+  ul.list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  ul.list li { position: relative; padding-left: 24px; font-size: 18px; line-height: 1.4; color: #d7dae0; }
+  ul.list li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--grad); }
+  ul.list.sm li { font-size: 16px; }
+  ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 11px; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 40px; font-size: 17px; line-height: 1.4; color: #d7dae0; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 28px; height: 28px; border-radius: 50%; background: var(--grad); color: #04121a; font-weight: 800; font-size: 14px; display: grid; place-items: center; }
+  .callout { border-left: 4px solid var(--cyan); background: rgba(83,226,251,.07); border-radius: 0 12px 12px 0; padding: 12px 16px; font-size: 16px; line-height: 1.45; color: #d7dae0; }
+  .callout.warn { border-color: var(--orange); background: rgba(255,176,84,.08); }
+  .mission { border: 1px dashed rgba(0,243,171,.6); background: rgba(0,243,171,.06); border-radius: 12px; padding: 12px 16px; font-size: 16px; line-height: 1.45; }
+  .mission b { color: var(--green); letter-spacing: .08em; text-transform: uppercase; font-size: 13px; display: block; margin-bottom: 3px; }
+  pre.code { margin: 0; padding: 14px 16px; border-radius: 12px; background: #0b0c0f; border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; color: #cfe9f0; white-space: pre-wrap; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th { text-align: left; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line); color: #d7dae0; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td b { color: var(--text); }
+
+  /* ---------- screenshots ---------- */
+  figure.shot { position: relative; margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #0b0c0f; cursor: zoom-in; display: flex; flex-direction: column; min-height: 0; transition: border-color .2s, transform .2s; }
+  figure.shot:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  figure.shot img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; min-height: 0; flex: 1; background: #0f1116; }
+  figure.shot figcaption { font-size: 13px; color: var(--muted); padding: 8px 12px; border-top: 1px solid var(--line); background: var(--card); }
+  figure.shot::after { content: 'Click to enlarge'; position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 600; background: rgba(6,6,6,.82); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; opacity: 0; transition: opacity .2s; color: var(--cyan); }
+  figure.shot:hover::after { opacity: 1; }
+  figure.shot:focus-visible { outline: 2px solid var(--cyan); }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 8px 18px; font-size: 15px; font-weight: 600; color: var(--muted); transition: all .2s; }
+  .tab:hover { color: var(--text); }
+  .tab.on { background: var(--grad); color: #04121a; border-color: transparent; }
+  .panel { display: none; flex: 1; min-height: 0; } .panel.on { display: flex; gap: 28px; }
+
+  /* ---------- intro video ---------- */
+  .vid-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .vid-head .btn { font-size: 15px; padding: 10px 22px; white-space: nowrap; }
+  .vid-wrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; margin-top: 14px; }
+  .vid-frame { height: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 0 70px rgba(65,141,255,.2), 0 0 120px rgba(203,56,189,.12); }
+  .vid-frame video { width: 100%; height: 100%; display: block; object-fit: contain; }
+
+  /* ---------- title + map ---------- */
+  .hero { justify-content: center; }
+  .hero .logo { height: 54px; margin-bottom: 38px; align-self: flex-start; }
+  .hero .row { display: flex; gap: 14px; margin-top: 36px; align-items: center; }
+  .btn { border: 0; border-radius: 999px; padding: 14px 28px; font-size: 18px; font-weight: 700; background: var(--grad); color: #04121a; transition: transform .15s, box-shadow .2s; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(83,226,251,.28); }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+  .btn.ghost:hover { border-color: var(--cyan); box-shadow: none; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+  .chip { font-size: 14px; color: #cfd3da; border: 1px solid var(--line); background: var(--card); padding: 6px 14px; border-radius: 999px; }
+
+  #board { position: relative; flex: 1; margin-top: 4px; }
+  #board svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .node { position: absolute; width: 270px; transform: translate(-50%, -50%); background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px 16px 74px; text-align: left; transition: all .25s; }
+  .node:hover { border-color: var(--cyan); transform: translate(-50%, -52%); box-shadow: 0 12px 34px rgba(83,226,251,.18); }
+  .node .n { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; background: var(--bg-2); border: 2px solid var(--cyan); color: var(--cyan); display: grid; place-items: center; font-weight: 800; font-size: 20px; }
+  .node strong { display: block; font-size: 18px; line-height: 1.2; }
+  .node span.t { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+  .node.done { border-color: rgba(0,243,171,.55); }
+  .node.done .n { background: var(--green); border-color: var(--green); color: #00281c; }
+  .node.next { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(83,226,251,.12), 0 0 40px rgba(83,226,251,.2); }
+  .flag { position: absolute; transform: translate(-50%, -50%); font-size: 13px; font-weight: 800; letter-spacing: .14em; padding: 6px 14px; border-radius: 999px; }
+  .flag.start { background: var(--grad); color: #04121a; }
+  .flag.fin { border: 2px dashed var(--orange); color: var(--orange); background: rgba(255,176,84,.08); }
+  .flag.fin.won { border-style: solid; background: var(--orange); color: #2b1600; }
+  .pawn { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: var(--grad); box-shadow: 0 0 0 5px rgba(83,226,251,.2), 0 0 24px rgba(203,56,189,.6); transform: translate(-50%, -50%); transition: left .7s cubic-bezier(.5,0,.2,1), top .7s cubic-bezier(.5,0,.2,1); pointer-events: none; }
+  .legend { display: flex; gap: 22px; font-size: 13px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+  /* ---------- station intro ---------- */
+  .intro { justify-content: center; }
+  .intro .big { font-size: 190px; line-height: .9; font-weight: 800; position: absolute; right: 0; top: 40px; opacity: .13; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .goals { display: grid; gap: 10px; margin-top: 22px; max-width: 760px; }
+  .goal { display: flex; gap: 12px; align-items: center; font-size: 19px; color: #d7dae0; }
+  .goal::before { content: '\25C6'; color: var(--cyan); }
+
+  /* ---------- checkpoint ---------- */
+  .quiz { display: grid; gap: 14px; margin-top: 14px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; }
+  .q.ok { border-color: rgba(0,243,171,.6); }
+  .q p.t { font-size: 19px; font-weight: 600; margin-bottom: 10px; }
+  .opts { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
+  .opt { text-align: left; background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 15px; line-height: 1.35; color: #d7dae0; transition: all .2s; }
+  .opt:hover:not(:disabled) { border-color: var(--cyan); }
+  .opt.good { background: rgba(0,243,171,.14); border-color: var(--green); color: var(--text); }
+  .opt.bad { background: rgba(255,107,122,.12); border-color: var(--bad); animation: shake .35s; }
+  .opt:disabled { cursor: default; }
+  .why { font-size: 14px; color: var(--green); margin-top: 8px; display: none; }
+  .q.ok .why { display: block; }
+  .hint { font-size: 14px; color: var(--bad); margin-top: 8px; display: none; }
+  .q.miss .hint { display: block; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .reward { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 14px 18px; border-radius: 16px; border: 1px dashed var(--line); color: var(--muted); font-size: 16px; transition: all .4s; }
+  .reward .stamp { width: 52px; height: 52px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font-size: 22px; font-weight: 800; }
+  .reward.got { border: 1px solid var(--green); background: rgba(0,243,171,.08); color: var(--text); }
+  .reward.got .stamp { border: 0; background: var(--green); color: #00281c; animation: pop .5s; }
+  @keyframes pop { 0% { transform: scale(.3); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+  /* ---------- lightbox ---------- */
+  #lb { position: fixed; inset: 0; z-index: 50; background: rgba(4,5,7,.985); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 28px; cursor: zoom-out; }
+  #lb.open { display: flex; }
+  #lb img { max-width: 100%; max-height: calc(100% - 56px); border-radius: 10px; background: #fff; box-shadow: 0 20px 80px rgba(0,0,0,.6); }
+  #lb p { margin: 14px 0 0; font-size: 15px; color: var(--muted); }
+  #lb button { position: absolute; top: 18px; right: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; width: 42px; height: 42px; font-size: 20px; }
+
+  /* ---------- bottom bar ---------- */
+  #bottom { flex: none; background: rgba(6,6,6,.92); border-top: 1px solid var(--line); }
+  #progress { position: relative; height: 8px; background: #15171c; cursor: pointer; }
+  #bar { height: 100%; width: 0; background: var(--grad); border-radius: 0 4px 4px 0; transition: width .45s cubic-bezier(.5,0,.2,1); box-shadow: 0 0 18px rgba(83,226,251,.5); }
+  .tick { position: absolute; top: 0; width: 2px; height: 100%; background: var(--bg); }
+  #controls { display: flex; align-items: center; gap: 14px; padding: 8px 20px; font-size: 14px; color: var(--muted); }
+  #controls .where { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #controls .where b { color: var(--text); font-weight: 600; }
+  .cbtn { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 16px; font-size: 14px; font-weight: 600; transition: all .2s; }
+  .cbtn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+  .cbtn:disabled { opacity: .35; cursor: default; }
+  .cbtn.go { background: var(--grad); color: #04121a; border: 0; }
+  .cbtn.go:hover:not(:disabled) { color: #04121a; box-shadow: 0 0 20px rgba(83,226,251,.35); }
+  .cbtn.pulse { animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(83,226,251,.5); } 50% { box-shadow: 0 0 0 10px rgba(83,226,251,0); } }
+  #counter { font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
+  @media (max-width: 640px) { #controls .where { display: none; } #controls { justify-content: space-between; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="viewport">
+ <div id="stage">
+
+  <div id="pathbar" class="hide">
+    <img class="mini-logo" src="img/brand/logo_text_dark.svg" alt="ELITEA">
+    <div class="trail" id="trail"></div>
+  </div>
+
+  <!-- ============ 0 · INTRO VIDEO ============ -->
+  <section class="slide vid" data-st="0" data-title="Intro video">
+    <div class="vid-head">
+      <div>
+        <div class="kicker">Before we start &middot; 2 min</div>
+        <h2 style="margin:0">Enbridge &times; ELITEA: <span class="grad">AI governance in action</span></h2>
+      </div>
+      <button class="btn ghost" data-next>Skip to the quest &rarr;</button>
+    </div>
+    <div class="vid-wrap">
+      <div class="vid-frame">
+        <video id="introVideo" controls playsinline preload="metadata" poster="video/poster.jpg">
+          <source src="video/enbridge-ai-governance.mp4" type="video/mp4">
+          Your browser cannot play this video.
+        </video>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 0 · TITLE ============ -->
+  <section class="slide hero" data-st="0" data-title="Welcome">
+    <img class="logo" src="img/brand/logo_text_tagline_dark.svg" alt="ELITEA – One AI Platform for Every Team">
+    <div class="kicker">Hands-on training</div>
+    <h1>ELITEA <span class="grad">Essentials Quest</span></h1>
+    <p class="lead" style="margin-top:20px">Six stations from your first chat to shared, tool-connected agents. Pass each checkpoint to move your pawn along the path.</p>
+    <div class="chips">
+      <span class="chip">1 What is ELITEA</span><span class="chip">2 Chat</span><span class="chip">3 Skills</span><span class="chip">4 Agents</span><span class="chip">5 Integrations</span><span class="chip">6 Collaboration</span>
+    </div>
+    <div class="row">
+      <button class="btn" data-next>Start the quest &rarr;</button>
+      <span class="muted" style="font-size:15px">About 60&ndash;75 min &middot; use &larr; &rarr; keys &middot; click any screenshot to enlarge</span>
+    </div>
+  </section>
+
+  <!-- ============ MAP ============ -->
+  <section class="slide" data-st="0" data-title="Game map" id="mapslide">
+    <div class="kicker">The board</div>
+    <h2>Follow the path. <span class="grad">Collect six stamps.</span></h2>
+    <p class="muted" style="font-size:17px">Each station = 3&ndash;5 slides + a checkpoint. Click a station to jump to it, or just keep pressing <b>Next</b>.</p>
+    <div id="board">
+      <svg viewBox="0 0 1168 470" preserveAspectRatio="none">
+        <defs><linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="#24e1fa"/><stop offset=".55" stop-color="#418dff"/><stop offset="1" stop-color="#cb38bd"/></linearGradient></defs>
+        <path d="M130 120 H1038 C1150 120 1150 350 1038 350 H130" fill="none" stroke="#252932" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 18"/>
+        <path id="pathdone" d="M130 120 H1038 C1150 120 1150 350 1038 350 H130" fill="none" stroke="url(#pg)" stroke-width="10" stroke-linecap="round" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="1000" style="transition:stroke-dashoffset .8s"/>
+      </svg>
+    </div>
+    <div class="legend"><span><i style="background:var(--cyan)"></i>Next station</span><span><i style="background:var(--green)"></i>Stamp collected</span><span>Free to jump around, but the path is the fastest route</span></div>
+  </section>
+
+  <!-- ============ STATION 1 · WHAT IS ELITEA ============ -->
+  <section class="slide intro" data-st="1" data-title="Station 1 · Intro">
+    <div class="big">01</div>
+    <div class="kicker"><b>Station 1</b> What is ELITEA?</div>
+    <h2 style="font-size:54px">One place to <span class="grad">build, run and share</span> AI.</h2>
+    <p class="lead">ELITEA manages the whole life of LLM assets in your organization, so teams reuse solutions instead of rebuilding them.</p>
+    <div class="goals">
+      <div class="goal">Name the building blocks and how they fit</div>
+      <div class="goal">Sign in and find your way around</div>
+      <div class="goal">Understand projects: Private, team and Public</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="1" data-title="1 · Building blocks">
+    <div class="kicker"><b>Station 1</b> Building blocks</div>
+    <h2>Six things you will use every day</h2>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card hl"><span class="tag">Talk</span><h3>Chat</h3><p>The hub. Talk to models, agents, pipelines, toolkits and teammates.</p></div>
+      <div class="card"><span class="tag g">Reuse</span><h3>Skills</h3><p>Reusable Markdown instructions you attach to agents and call on demand.</p></div>
+      <div class="card"><span class="tag v">Do</span><h3>Agents</h3><p>Assistants = instructions + model + tools. They decide and act.</p></div>
+      <div class="card"><span class="tag o">Automate</span><h3>Pipelines</h3><p>Visual multi-step workflows with state and routing.</p></div>
+      <div class="card"><span class="tag">Connect</span><h3>Toolkits &amp; MCPs</h3><p>Connectors to Jira, Confluence, SharePoint and more.</p></div>
+      <div class="card"><span class="tag g">Store</span><h3>Artifacts</h3><p>Project files in buckets, shared by agents and people.</p></div>
+    </div>
+    <div class="callout" style="margin-top:16px">Rule of thumb: <b>Credential</b> &rarr; <b>Toolkit</b> &rarr; <b>Agent</b> (+ Skills). Pipelines when the process is fixed.</div>
+  </section>
+
+  <section class="slide" data-st="1" data-title="1 · Getting in">
+    <div class="kicker"><b>Station 1</b> Getting in</div>
+    <h2>Sign in and pick your project</h2>
+    <div class="body">
+      <div class="col">
+        <ol class="steps">
+          <li>Open <code>https://next.elitea.ai</code> and sign in with your EPAM account. No registration needed.</li>
+          <li>You land in <b>Chat</b>. First login: allow about 5 minutes for your <b>Private</b> project to initialise.</li>
+          <li>Use the <b>Project Selector</b> in the sidebar to switch from Public to Private.</li>
+          <li>Click the ELITEA icon (top left) to open all menus.</li>
+        </ol>
+        <div class="mission"><b>Mission</b>Log in, switch to Private, and find Chat, Agents, Skills, Toolkits &amp; Indexes and Artifacts.</div>
+      </div>
+      <div class="col">
+        <div class="card"><span class="tag">Private</span><p>Your personal workspace. Full privacy, no user sharing.</p></div>
+        <div class="card"><span class="tag v">Team</span><p>Shared work with role-based access, invites and public chats.</p></div>
+        <div class="card"><span class="tag o">Public</span><p>Open space. Some menus (e.g. Skills, folders) are hidden here.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="1" data-checkpoint="1" data-title="1 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 1</b> What is ELITEA?</div>
+    <h2>Answer both to collect the stamp</h2>
+    <div class="quiz">
+      <div class="q" data-why="Credentials hold the auth; toolkits use them.">
+        <p class="t">What do you create first to connect an external system?</p>
+        <div class="opts"><button class="opt">An agent</button><button class="opt" data-ok>A credential</button><button class="opt">A pipeline</button></div>
+        <div class="hint">Not quite. Think about what an external system needs from you first.</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="Skills are not available in the Public project.">
+        <p class="t">You cannot see the Skills menu. Most likely cause?</p>
+        <div class="opts"><button class="opt" data-ok>You are in the Public project</button><button class="opt">Skills are admin-only</button><button class="opt">You have no agents yet</button></div>
+        <div class="hint">Look at the project selector.</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">1</div><div class="rtext">Stamp 1 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ STATION 2 · CHAT ============ -->
+  <section class="slide intro" data-st="2" data-title="Station 2 · Intro">
+    <div class="big">02</div>
+    <div class="kicker"><b>Station 2</b> Chat &amp; basic modules</div>
+    <h2 style="font-size:54px">Your <span class="grad">control room</span> for everything.</h2>
+    <p class="lead">Each chat is an independent conversation with its own context. Modules add power only when you switch them on.</p>
+    <div class="goals">
+      <div class="goal">Read the Chat page and toolbar</div>
+      <div class="goal">Attach files and use the right model</div>
+      <div class="goal">Know the ten modules and start with three</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="2" data-title="2 · Chat anatomy">
+    <div class="kicker"><b>Station 2</b> Anatomy</div>
+    <h2>The Chat page at a glance</h2>
+    <div class="body" style="flex-direction:column;gap:16px">
+      <figure class="shot" style="flex:1" tabindex="0"><img src="img/chat-structure.png" alt="Chat page structure" data-cap="Chat page: CHATS sidebar (left), main area (center), PARTICIPANTS and Context Budget (right)"><figcaption>CHATS sidebar &middot; main area &middot; PARTICIPANTS panel &middot; Context Budget</figcaption></figure>
+      <div class="grid g4">
+        <div class="card"><h3>CHATS</h3><p>By time period or folders. Pin, rename, duplicate.</p></div>
+        <div class="card"><h3>Participants</h3><p>Agents, pipelines, toolkits, MCPs and users.</p></div>
+        <div class="card"><h3>Mentions</h3><p><code>#</code> entities &middot; <code>@</code> people</p></div>
+        <div class="card"><h3>Send</h3><p><code>Enter</code> sends &middot; <code>Shift+Enter</code> new line</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="2" data-title="2 · Toolbar & attachments">
+    <div class="kicker"><b>Station 2</b> Toolbar &amp; attachments</div>
+    <h2>The <code style="font-size:.8em">+</code> button does the heavy lifting</h2>
+    <div class="body">
+      <div class="col wide">
+        <figure class="shot" style="flex:1" tabindex="0"><img src="img/chat-toolbar.png" alt="Chat input toolbar" data-cap="Chat input toolbar: +, model selector, model settings, voice input, speaking mode"><figcaption>Input toolbar</figcaption></figure>
+        <ul class="list sm">
+          <li><b>+</b> attach files, modules, participants, invite users</li>
+          <li><b>Model selector</b> (or Auto) and <b>settings</b> for creativity vs reasoning</li>
+          <li><b>Voice input</b> and hands-free <b>Speaking mode</b></li>
+        </ul>
+      </div>
+      <div class="col narrow">
+        <div class="card hl"><h3>Attachments</h3><p>Drag, paste or <b>+ &rarr; Attach Files</b>. Images go to the model for vision. Other files are indexed for semantic search and stored in the default attachments bucket.</p></div>
+        <table><tr><th>Limit</th><th>Value</th></tr><tr><td>Files per message</td><td><b>10</b></td></tr><tr><td>Size per file / total</td><td><b>150 MB</b></td></tr></table>
+        <div class="callout warn">Agents and pipelines accept files only if <b>Attachments</b> is on in their MODULES.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="2" data-title="2 · Modules">
+    <div class="kicker"><b>Station 2</b> Modules</div>
+    <h2>Ten modules, all <span class="grad">off by default</span></h2>
+    <p class="muted" style="font-size:17px">Turn on with <b>+ &rarr; Modules</b> in a chat, or <b>TOOLS &rarr; MODULES</b> in an agent. Admins set defaults in <i>Settings &rarr; General &rarr; Default Modules</i>.</p>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card hl"><span class="tag g">Start here</span><h3>Ask User</h3><p>Pauses to ask structured questions instead of guessing.</p></div>
+      <div class="card hl"><span class="tag g">Start here</span><h3>Data Analysis</h3><p>Upload CSV/Excel, ask in plain English, get Pandas analysis and charts.</p></div>
+      <div class="card hl"><span class="tag g">Start here</span><h3>Planner</h3><p>Create and track tasks and action items in chat.</p></div>
+      <div class="card"><span class="tag v">Builders</span><h3>Skill / Agent &amp; Pipeline / Project Context Builder</h3><p>Create and edit those items from chat (used in stations 3 and 4).</p></div>
+      <div class="card"><h3>Image Creation</h3><p>Needs an image-capable model and provider toolkit.</p></div>
+      <div class="card"><h3>Python Sandbox &middot; Swarm &middot; Smart Tools</h3><p>Run code, coordinate agents, load toolkit schemas on demand to save tokens.</p></div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="2" data-title="2 · Stay in control">
+    <div class="kicker"><b>Station 2</b> Stay in control</div>
+    <h2>Questions, Canvas and budget</h2>
+    <div class="body">
+      <div class="col">
+        <ul class="list">
+          <li><b>Context Budget</b> tracks tokens; old messages can be pruned or summarised.</li>
+          <li><b>Canvas</b> opens code, tables, Mermaid and documents in a side editor.</li>
+          <li><b>Follow-up chips</b> and <b>conversation starters</b> suggest next steps.</li>
+          <li><b>Sensitive-action guardrail</b>: you approve risky tool calls first.</li>
+          <li><b>Stop generating</b> brings your message back for editing.</li>
+        </ul>
+        <div class="callout warn">One topic per chat. Mixing topics pollutes the context.</div>
+        <div class="mission"><b>Mission</b>Attach a small CSV, switch on Data Analysis + Ask User, and ask which columns suit a summary chart.</div>
+      </div>
+      <figure class="shot col wide" tabindex="0" style="flex:1.15"><img src="img/chat-clarify.png" alt="Ask User clarifying question card" data-cap="Ask User module: clarifying questions appear as a stepper card"><figcaption>Ask User: a stepper card with options or free text</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" data-st="2" data-checkpoint="2" data-title="2 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 2</b> Chat</div>
+    <h2>Two questions to the next stamp</h2>
+    <div class="quiz">
+      <div class="q" data-why="Attachments must be toggled on in the agent's MODULES.">
+        <p class="t">Your agent refuses attachments. Why?</p>
+        <div class="opts"><button class="opt">Files over 1 MB are blocked</button><button class="opt" data-ok>Attachments is off in the agent's MODULES</button><button class="opt">Agents never accept files</button></div>
+        <div class="hint">Direct model chats always allow files. Agents need a switch.</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="Ask User lets the model pause and ask instead of assuming.">
+        <p class="t">Which module stops the model from guessing missing details?</p>
+        <div class="opts"><button class="opt">Planner</button><button class="opt">Swarm Mode</button><button class="opt" data-ok>Ask User</button></div>
+        <div class="hint">Think "clarifying questions".</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">2</div><div class="rtext">Stamp 2 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ STATION 3 · SKILLS ============ -->
+  <section class="slide intro" data-st="3" data-title="Station 3 · Intro">
+    <div class="big">03</div>
+    <div class="kicker"><b>Station 3</b> Skills &middot; Build with AI</div>
+    <h2 style="font-size:54px">Write once, <span class="grad">reuse everywhere.</span></h2>
+    <p class="lead">A Skill is a named set of Markdown instructions. Attach it to agents, or call it in chat with <code>~skill-name</code>.</p>
+    <div class="goals">
+      <div class="goal">Know when a Skill beats agent instructions</div>
+      <div class="goal">Create one with AI in three different ways</div>
+      <div class="goal">Respect naming, size and versioning rules</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="3" data-title="3 · Why skills">
+    <div class="kicker"><b>Station 3</b> Why Skills</div>
+    <h2>One checklist, three agents, zero copy-paste</h2>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card hl"><h3>Reusable</h3><p>Update the Skill and every attached agent picks it up.</p></div>
+      <div class="card hl"><h3>Versioned</h3><p>Named versions beside the always-present <code>base</code>.</p></div>
+      <div class="card hl"><h3>Modular</h3><p>Attach up to <b>5</b> Skills to one agent version.</p></div>
+    </div>
+    <div class="body" style="margin-top:16px">
+      <div class="col"><h3>Good candidates</h3><ul class="list sm"><li>PR-review checklist</li><li>Release-note style guide</li><li>"Formal tone" persona</li><li>Step-by-step QA procedure</li></ul></div>
+      <div class="col wide"><h3>Example: <code>pr-review</code></h3><pre class="code">## PR Description Review
+Check: 1 Summary  2 Affected components
+       3 Test coverage  4 Ticket reference
+Format: ✅ Present: [item]
+        ❌ Missing: [item] - [suggested addition]</pre></div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="3" data-title="3 · Build with AI">
+    <div class="kicker"><b>Station 3</b> Build with AI</div>
+    <h2>Three ways to create a Skill with AI</h2>
+    <div class="tabs" data-tabs>
+      <button class="tab on" data-p="sk1">Generate with AI</button><button class="tab" data-p="sk2">Edit with AI</button><button class="tab" data-p="sk3">Skill Builder in chat</button>
+    </div>
+    <div style="flex:1;min-height:0;margin-top:16px;display:flex">
+      <div class="panel on" id="sk1" style="width:100%">
+        <div class="col">
+          <ol class="steps">
+            <li>Open <b>Skills</b> &rarr; <b>+ Create</b>.</li>
+            <li>In the General header click <b>Generate with AI</b>.</li>
+            <li>Describe what the skill should do in plain words.</li>
+            <li>Review the drafted Name, Description, Instructions &rarr; <b>Approve</b> &rarr; <b>Save</b>.</li>
+            <li>Test in the side chat (ephemeral, not saved).</li>
+          </ol>
+        </div>
+        <figure class="shot col wide" tabindex="0"><img src="img/skills-create.png" alt="Skill editor" data-cap="Skill editor: General and Instructions on the left, test chat on the right"><figcaption>Skill editor with built-in test chat</figcaption></figure>
+      </div>
+      <div class="panel" id="sk2" style="width:100%">
+        <div class="col">
+          <ol class="steps">
+            <li>Open an existing Skill &rarr; <b>Edit with AI</b>.</li>
+            <li>Describe the change, e.g. "add a severity label per issue" &rarr; <b>Generate Draft</b>.</li>
+            <li>Review the draft step by step.</li>
+            <li><b>Save</b> over the version or <b>Save as Version</b> to keep the original.</li>
+          </ol>
+          <div class="callout warn">Published or embedded versions cannot be edited. Create a new version.</div>
+        </div>
+        <figure class="shot col wide" tabindex="0"><img src="img/skills-catalog.png" alt="Skills catalog" data-cap="Skills catalog and versions"><figcaption>Skills list, versions and Catalog</figcaption></figure>
+      </div>
+      <div class="panel" id="sk3" style="width:100%">
+        <div class="col">
+          <ol class="steps">
+            <li>In a chat: <b>+ &rarr; Modules &rarr; Skill Builder</b> (and <b>Ask User</b>).</li>
+            <li>Say: "Create a skill code-review-assistant for PEP 8 and security issues."</li>
+            <li>Answer any clarifying questions.</li>
+            <li>The skill opens in <b>Canvas</b> and appears as a chip in chat.</li>
+          </ol>
+          <p class="muted" style="font-size:15px">From chat you can also list, update, version, link to agents or delete skills.</p>
+        </div>
+        <figure class="shot col" tabindex="0" style="flex:.6"><img src="img/skillbuilder-enable.png" alt="Enable Skill Builder" data-cap="Enable Skill Builder in the Modules list"><figcaption>Enable Skill Builder</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="3" data-title="3 · Rules">
+    <div class="kicker"><b>Station 3</b> Rules &amp; use</div>
+    <h2>Naming, limits and how to call a Skill</h2>
+    <div class="body">
+      <div class="col wide">
+        <table>
+          <tr><th>Item</th><th>Rule</th></tr>
+          <tr><td><b>Name</b></td><td>lowercase, digits, hyphens; max 64; no leading/trailing hyphen; no "claude" or "anthropic"</td></tr>
+          <tr><td><b>Instructions</b></td><td>Markdown, max 5000 characters</td></tr>
+          <tr><td><b>Attach</b></td><td>Agent editor &rarr; Skills section, max 5 per version</td></tr>
+          <tr><td><b>Call in chat</b></td><td>Type <code>~skill-name</code></td></tr>
+          <tr><td><b>Availability</b></td><td>Team and Private projects, not Public</td></tr>
+        </table>
+      </div>
+      <div class="col">
+        <div class="mission"><b>Mission</b>Generate a <code>meeting-summary</code> skill ("decisions, owners, deadlines"), test it in the side chat and save it. You will attach it in Station 4.</div>
+        <div class="callout">Shared behaviour &rarr; Skill. Agent-specific goals and tool guidance &rarr; agent instructions.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="3" data-checkpoint="3" data-title="3 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 3</b> Skills</div>
+    <h2>Two questions to the next stamp</h2>
+    <div class="quiz">
+      <div class="q" data-why="Update once, all attached agents inherit it.">
+        <p class="t">Three agents need the same review checklist. Best approach?</p>
+        <div class="opts"><button class="opt">Paste it into each agent</button><button class="opt" data-ok>Create one Skill and attach it</button><button class="opt">Make a pipeline</button></div>
+        <div class="hint">Which option gives you a single source of truth?</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="Published versions are locked; create a new version.">
+        <p class="t">A skill version is published and needs a tweak. What now?</p>
+        <div class="opts"><button class="opt">Edit it in place</button><button class="opt" data-ok>Create a new version</button><button class="opt">Delete the agent</button></div>
+        <div class="hint">Published versions cannot be updated.</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">3</div><div class="rtext">Stamp 3 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ STATION 4 · AGENTS ============ -->
+  <section class="slide intro" data-st="4" data-title="Station 4 · Intro">
+    <div class="big">04</div>
+    <div class="kicker"><b>Station 4</b> Agents &middot; Build with AI</div>
+    <h2 style="font-size:54px">From a sentence to a <span class="grad">working agent.</span></h2>
+    <p class="lead">An agent follows instructions, uses tools and makes decisions. It is saved, versioned and reusable by your team.</p>
+    <div class="goals">
+      <div class="goal">Know the parts of an agent</div>
+      <div class="goal">Create and refine one with Build / Edit with AI</div>
+      <div class="goal">Test, debug and version it</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="4" data-title="4 · Agent anatomy">
+    <div class="kicker"><b>Station 4</b> Anatomy</div>
+    <h2>What is inside an agent</h2>
+    <div class="body">
+      <div class="col">
+        <div class="grid g2">
+          <div class="card hl"><h3>Instructions</h3><p>Core system prompt. Be specific; name tools explicitly.</p></div>
+          <div class="card hl"><h3>Tools</h3><p>Toolkits, agents, MCPs, pipelines and Modules.</p></div>
+          <div class="card"><h3>Skills</h3><p>Reusable instructions, up to 5.</p></div>
+          <div class="card"><h3>Model</h3><p>LLM choice and settings.</p></div>
+          <div class="card"><h3>Variables</h3><p>Placeholders like <code>{{customer}}</code>.</p></div>
+          <div class="card"><h3>Welcome + starters</h3><p>First message and up to 4 starters.</p></div>
+        </div>
+      </div>
+      <figure class="shot col" tabindex="0" style="flex:1.1"><img src="img/agents-menu.png" alt="Agents page" data-cap="The Agents page"><figcaption>The Agents page</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" data-st="4" data-title="4 · Build with AI">
+    <div class="kicker"><b>Station 4</b> Build with AI</div>
+    <h2>Describe it. Review it. Create it.</h2>
+    <div class="body">
+      <div class="col" style="flex:1.2">
+        <ol class="steps">
+          <li><b>Agents</b> &rarr; <b>+ Create</b> to open the new-agent form.</li>
+          <li>In the General header click <b>Build with AI</b> (sparkle ✨).</li>
+          <li>Describe goal, tasks, tone. Press <code>Enter</code> or <b>Generate</b>.</li>
+          <li>Review Name (max 32), Description, Instructions, Welcome message, up to 4 starters. Tick suggested toolkits and agents.</li>
+          <li><b>Create Agent</b>. Nothing is saved until you do; <i>Back to prompt</i> lets you regenerate.</li>
+          <li>Land on Configuration: attach Skills, tune model, modules, variables. Save.</li>
+        </ol>
+      </div>
+      <div style="display:flex;gap:14px;flex:1;min-height:0">
+        <figure class="shot" tabindex="0" style="flex:1"><img src="img/buildai-describe.png" alt="Describe your agent" data-cap="Step 1: describe your agent in plain language"><figcaption>Describe</figcaption></figure>
+        <figure class="shot" tabindex="0" style="flex:1"><img src="img/buildai-review.png" alt="Review the draft" data-cap="Step 2: review and edit every generated field before creating"><figcaption>Review &amp; create</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="4" data-title="4 · Prompt + edit">
+    <div class="kicker"><b>Station 4</b> Better prompts, then refine</div>
+    <h2>A prompt that works, and Edit with AI</h2>
+    <div class="body">
+      <div class="col">
+        <h3>Sample description</h3>
+        <pre class="code">A meeting follow-up agent. It turns pasted
+meeting notes into decisions, action items with
+owners and due dates, and open questions.
+Concise, neutral tone. Ask me for missing owners
+instead of guessing. Use the meeting-summary
+skill and be able to email the result.</pre>
+        <p class="muted" style="font-size:15px">Include purpose, tasks, tone, constraints, and the tools you plan to use.</p>
+      </div>
+      <div class="col">
+        <h3>Edit with AI (saved agents)</h3>
+        <ul class="list sm">
+          <li>Describe the change &rarr; <b>Generate Draft</b></li>
+          <li>Wizard: General &middot; Instructions &middot; User Interaction &middot; Tools &amp; Skills &middot; Summary</li>
+          <li>Keep or skip each change</li>
+          <li><b>Save</b> or <b>Save as Version</b></li>
+        </ul>
+        <div class="callout">From chat: <b>+ &rarr; Agents &rarr; Create New Agent</b> opens the same form in Canvas.</div>
+        <div class="mission"><b>Mission</b>Build the follow-up agent above, attach <code>meeting-summary</code>, and test it with sample notes.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="4" data-title="4 · Test & version">
+    <div class="kicker"><b>Station 4</b> Test, debug, version</div>
+    <h2>Make it dependable</h2>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card hl"><h3>Test fast</h3><p>Use the embedded chat panel and try many different inputs.</p></div>
+      <div class="card hl"><h3>Debug with Run History</h3><p>See exactly what the agent did and which tools it called.</p></div>
+      <div class="card"><h3>Version safely</h3><p>Change in a new version; use Agent Evaluation to score with test cases.</p></div>
+      <div class="card"><h3>Check credentials</h3><p>Verify toolkit credentials before running. No hardcoded values.</p></div>
+    </div>
+    <div class="callout warn" style="margin-top:18px">Vague instructions are the most common cause of weak agents. Say what to do, when to use which tool, and what the output looks like.</div>
+  </section>
+
+  <section class="slide" data-st="4" data-checkpoint="4" data-title="4 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 4</b> Agents</div>
+    <h2>Two questions to the next stamp</h2>
+    <div class="quiz">
+      <div class="q" data-why="Build with AI creates a draft only; you confirm with Create Agent.">
+        <p class="t">When is the agent actually saved in Build with AI?</p>
+        <div class="opts"><button class="opt">After you press Generate</button><button class="opt" data-ok>When you click Create Agent</button><button class="opt">As soon as you type</button></div>
+        <div class="hint">The draft is non-destructive until you confirm.</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="Run History shows each run and the tool calls made.">
+        <p class="t">The agent did something odd. Where do you look first?</p>
+        <div class="opts"><button class="opt">Credentials menu</button><button class="opt" data-ok>Run History</button><button class="opt">Artifacts</button></div>
+        <div class="hint">Which view records what the agent actually did?</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">4</div><div class="rtext">Stamp 4 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ STATION 5 · INTEGRATIONS ============ -->
+  <section class="slide intro" data-st="5" data-title="Station 5 · Intro">
+    <div class="big">05</div>
+    <div class="kicker"><b>Station 5</b> Basic integrations</div>
+    <h2 style="font-size:54px">Give agents <span class="grad">real reach.</span></h2>
+    <p class="lead">Confluence, SharePoint, Outlook, Teams/Slack and PowerPoint all follow one pattern. Learn it once.</p>
+    <div class="goals">
+      <div class="goal">Credential &rarr; Toolkit &rarr; Use</div>
+      <div class="goal">Know the auth type of each connector</div>
+      <div class="goal">Enable only the tools you need</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="5" data-title="5 · The pattern">
+    <div class="kicker"><b>Station 5</b> The pattern</div>
+    <h2>Three moves, every time</h2>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="card hl"><span class="tag">1</span><h3>Credential</h3><p>Save the auth in <b>Credentials</b>. Keep secrets in <i>Settings &rarr; Secrets</i> and pick them from the dropdown.</p></div>
+      <div class="card hl"><span class="tag">2</span><h3>Toolkit</h3><p>In <b>Toolkits &amp; Indexes</b> create the toolkit, choose the credential, tick only needed tools.</p></div>
+      <div class="card hl"><span class="tag">3</span><h3>Use it</h3><p>Add it to an agent, pipeline or chat. Test each tool individually first.</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="callout">Credentials can be <b>private</b> (you) or <b>project</b> (shared). Prefer user-specific credentials for accountability.</div>
+      <div class="callout warn">Enabling every tool wastes tokens and confuses the model. Pick the few you need.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="5" data-title="5 · The five connectors">
+    <div class="kicker"><b>Station 5</b> The five connectors</div>
+    <h2>Pick a connector</h2>
+    <div class="tabs" data-tabs>
+      <button class="tab on" data-p="i1">Confluence</button><button class="tab" data-p="i2">SharePoint</button><button class="tab" data-p="i3">Outlook</button><button class="tab" data-p="i4">Teams / Slack</button><button class="tab" data-p="i5">PPTX</button>
+    </div>
+    <div style="flex:1;min-height:0;margin-top:16px;display:flex">
+      <div class="panel on" id="i1" style="width:100%">
+        <div class="col">
+          <p class="lead" style="font-size:19px">Read, create and update pages and spaces; search your knowledge.</p>
+          <table>
+            <tr><td><b>Auth</b></td><td>Base URL + API token (Basic) or Personal Access Token (Bearer)</td></tr>
+            <tr><td><b>Cloud URL</b></td><td><code>https://yourco.atlassian.net/wiki</code></td></tr>
+            <tr><td><b>Token</b></td><td>Atlassian security &rarr; Create and manage API tokens. Shown once.</td></tr>
+          </table>
+        </div>
+        <div class="col">
+          <div class="card hl"><h3>Indexing tools</h3><p>Index data &middot; Search index &middot; Stepback search / summary &middot; List / Remove index. Build a semantic index so answers are grounded.</p></div>
+          <div class="mission"><b>Try prompt</b>"Search the Delivery space for the onboarding checklist and summarise what changed this quarter."</div>
+        </div>
+      </div>
+      <div class="panel" id="i2" style="width:100%">
+        <div class="col">
+          <p class="lead" style="font-size:19px">Read, write and index documents and lists on SharePoint sites.</p>
+          <table>
+            <tr><td><b>Auth</b></td><td>Azure AD app. <b>Delegated (User OAuth)</b> is recommended; follows the user's own permissions</td></tr>
+            <tr><td><b>Note</b></td><td>Legacy ACS patterns were retired by Microsoft in April 2026</td></tr>
+          </table>
+        </div>
+        <div class="col">
+          <div class="card hl"><h3>Key tools</h3><p>Get files list &middot; Read document (.docx .pptx .xlsx .md &hellip;) &middot; Read from sharing link &middot; Upload file &middot; Get/Read lists &middot; Create list item &middot; Index / Search index.</p></div>
+          <div class="mission"><b>Try prompt</b>"List files in Proposals, read the latest .docx, upload a one-page summary back."</div>
+        </div>
+      </div>
+      <div class="panel" id="i3" style="width:100%">
+        <div class="col">
+          <p class="lead" style="font-size:19px">Read, search, send, reply and organise email.</p>
+          <table>
+            <tr><td><b>Auth</b></td><td><b>Delegated (User OAuth) only</b>: Client ID, Client Secret, Discovery Endpoint, Scopes (Mail.Read, Mail.Send)</td></tr>
+            <tr><td><b>Login</b></td><td>Click <b>Login</b> in the credential. Changed scopes? Log in again.</td></tr>
+            <tr><td><b>Tools</b></td><td>List / Search messages (KQL), Get message / thread, Send, Reply, Move, Delete</td></tr>
+          </table>
+          <div class="callout warn">Send and Delete touch a real mailbox. Enable them deliberately.</div>
+        </div>
+        <figure class="shot col" tabindex="0" style="flex:.55"><img src="img/outlook-toolkit.png" alt="Outlook toolkit configuration" data-cap="Outlook toolkit configuration"><figcaption>Outlook toolkit</figcaption></figure>
+      </div>
+      <div class="panel" id="i4" style="width:100%">
+        <div class="col">
+          <span class="tag">Microsoft Teams</span>
+          <p style="font-size:16px;color:#c4c8d0;line-height:1.45">Delegated OAuth only (like Outlook). Scopes: Chat.Read, ChatMessage.Send, ChannelMessage.Send.</p>
+          <ul class="list sm"><li>List teams, channels, chats</li><li>Find chat messages, Search (KQL)</li><li>Send chat message, post to channel with @mentions</li></ul>
+          <div class="callout warn">By design it does not read channel messages. Use search or chats.</div>
+        </div>
+        <div class="col">
+          <span class="tag g">Slack</span>
+          <p style="font-size:16px;color:#c4c8d0;line-height:1.45">Create a Slack App and use a <b>Bot token</b> (<code>xoxb-</code>, recommended) or User token (<code>xoxp-</code>). Store it as a Secret.</p>
+          <ul class="list sm"><li>Send message, Read messages</li><li>Create channel, Invite to conversation</li><li>List channel / workspace users</li></ul>
+        </div>
+        <figure class="shot col" tabindex="0" style="flex:.55"><img src="img/teams-toolkit.png" alt="Teams toolkit configuration" data-cap="Teams toolkit configuration"><figcaption>Teams toolkit</figcaption></figure>
+      </div>
+      <div class="panel" id="i5" style="width:100%">
+        <div class="col">
+          <p class="lead" style="font-size:19px">Translate decks and generate presentations from a template.</p>
+          <ol class="steps">
+            <li>Put the source <code>.pptx</code> and the template into an <b>Artifacts bucket</b>.</li>
+            <li>In an agent: Toolkits &rarr; <b>+</b> &rarr; <b>PPTX</b>.</li>
+            <li>Enter the bucket name; tick <i>Translate presentation</i> and/or <i>Fill template</i>.</li>
+            <li>Click the arrow to return, then <b>Save</b>.</li>
+          </ol>
+        </div>
+        <figure class="shot col" tabindex="0"><img src="img/pptx-toolkit.png" alt="PPTX toolkit configuration" data-cap="PPTX toolkit: bucket name and tools"><figcaption>PPTX toolkit configuration</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="5" data-title="5 · Combine">
+    <div class="kicker"><b>Station 5</b> Combine them</div>
+    <h2>One prompt, four systems</h2>
+    <pre class="code" style="font-size:17px;margin-top:16px">"Find this week's project updates in Confluence, summarise them
+with the meeting-summary skill, email the summary to the team via
+Outlook and post the highlights in our Teams channel."</pre>
+    <div class="body">
+      <div class="col"><div class="card"><h3>Why it works</h3><p>The agent has: a toolkit per system, a Skill for the summary format, and instructions that name each tool.</p></div></div>
+      <div class="col"><div class="mission"><b>Mission</b>Create one credential + toolkit (Confluence is quickest), attach it to your agent, enable 2&ndash;3 tools, run a read-only prompt, then check Run History for the tool calls.</div></div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="5" data-checkpoint="5" data-title="5 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 5</b> Integrations</div>
+    <h2>Two questions to the next stamp</h2>
+    <div class="quiz">
+      <div class="q" data-why="Secrets can be rotated centrally and never pasted into toolkit text.">
+        <p class="t">Where should an API token live?</p>
+        <div class="opts"><button class="opt">In the agent instructions</button><button class="opt" data-ok>In Settings &rarr; Secrets, selected in the credential</button><button class="opt">In a chat message</button></div>
+        <div class="hint">Think rotation and not leaking.</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="Outlook uses Delegated User OAuth and a Login step.">
+        <p class="t">Outlook toolkit authenticates with…</p>
+        <div class="opts"><button class="opt" data-ok>Delegated User OAuth (Login)</button><button class="opt">Your password</button><button class="opt">Anonymous access</button></div>
+        <div class="hint">It acts on behalf of a signed-in user.</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">5</div><div class="rtext">Stamp 5 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ STATION 6 · COLLABORATION ============ -->
+  <section class="slide intro" data-st="6" data-title="Station 6 · Intro">
+    <div class="big">06</div>
+    <div class="kicker"><b>Station 6</b> Collaboration &amp; sharing</div>
+    <h2 style="font-size:54px">Share <span class="grad">on purpose.</span></h2>
+    <p class="lead">What you can share depends on project type and role. Artifacts keep files shared and governed.</p>
+    <div class="goals">
+      <div class="goal">Share chats with teammates and outsiders</div>
+      <div class="goal">Choose the right role; publish agents safely</div>
+      <div class="goal">Use Artifacts buckets and retention</div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="6" data-title="6 · Sharing chats">
+    <div class="kicker"><b>Station 6</b> Sharing chats</div>
+    <h2>Four ways to share a conversation</h2>
+    <div class="body">
+      <div class="col" style="flex:1.3">
+        <div class="grid g2">
+          <div class="card hl"><h3>Invite users</h3><p><b>+ &rarr; Invite Users</b> (team projects). They get a notification.</p></div>
+          <div class="card hl"><h3>Public chat</h3><p>Visible to all project members. Reversible, so decide with care.</p></div>
+          <div class="card"><h3>Share link</h3><p>Copy a link for colleagues who already have project access.</p></div>
+          <div class="card"><h3>External link</h3><p>Secure, <b>read-only</b> link for people outside ELITEA. View or revoke under Manage Links.</p></div>
+        </div>
+        <ul class="list sm"><li><code>@name</code> notifies a person (AI will not answer that message)</li><li>Folders are visible to the team; chats inside only to participants</li></ul>
+      </div>
+      <figure class="shot col narrow" tabindex="0" style="flex:.5;align-self:flex-start"><img src="img/chat-participants.png" alt="Users in participants panel" data-cap="Users appear in the PARTICIPANTS panel"><figcaption>PARTICIPANTS</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" data-st="6" data-title="6 · Roles">
+    <div class="kicker"><b>Station 6</b> Roles &amp; access</div>
+    <h2>Least privilege, always</h2>
+    <div class="body">
+      <div class="col wide">
+        <table>
+          <tr><th>Role</th><th>Can do</th></tr>
+          <tr><td><b>Admin</b></td><td>Full access, user management, all create / edit / delete</td></tr>
+          <tr><td><b>Editor</b></td><td>Create and modify content; no delete or admin</td></tr>
+          <tr><td><b>Viewer</b></td><td>Read-only: use but not modify</td></tr>
+          <tr><td><b>Monitor</b></td><td>Tracks activity and usage</td></tr>
+        </table>
+      </div>
+      <div class="col">
+        <div class="callout">Invite people in <b>Settings &rarr; Users</b>. Batch edits supported.</div>
+        <div class="callout">Folders can add per-user exceptions: <b>Read-only</b> or <b>No access</b>. Exceptions only restrict.</div>
+        <div class="callout warn">Do not hand out Admin unnecessarily. Review roles regularly.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-st="6" data-title="6 · Publishing">
+    <div class="kicker"><b>Station 6</b> Sharing agents &amp; skills</div>
+    <h2>Publish, fork, export</h2>
+    <div class="body">
+      <div class="col">
+        <ul class="list">
+          <li><b>In the project</b>: members use the agent and attach the project's skills.</li>
+          <li><b>Publish</b>: agent ⋮ menu &rarr; <i>Publish</i>. A 3-step wizard runs an AI validation (issues, warnings, improvements) before it goes live. Unpublish any time.</li>
+          <li><b>Skills</b> publish to the ELITEA Catalog the same way.</li>
+          <li><b>Fork</b> between projects; <b>Import / Export</b> to back up or move.</li>
+        </ul>
+        <div class="callout warn">Never publish with hardcoded credentials or project-specific values.</div>
+      </div>
+      <figure class="shot col" tabindex="0"><img src="img/agent-publish.png" alt="Open publish menu" data-cap="Agent ⋮ menu → Publish starts the three-step wizard"><figcaption>Agent &rarr; &#8942; &rarr; Publish</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" data-st="6" data-title="6 · Artifacts">
+    <div class="kicker"><b>Station 6</b> Artifacts</div>
+    <h2>Shared files in buckets</h2>
+    <div class="body">
+      <div class="col">
+        <ul class="list sm">
+          <li><b>+ Create Bucket</b>: name starts with a letter; letters, numbers, hyphens; max 56.</li>
+          <li><b>Retention policy</b> (days to years). Expired files are deleted and cannot be recovered.</li>
+          <li>Drag-and-drop upload, folders, 50+ previews; edit text, Markdown, CSV, DOCX in <b>Canvas</b>.</li>
+          <li>Agents read / write through the <b>Artifact toolkit</b>; chat attachments land in a default bucket.</li>
+        </ul>
+        <div class="callout warn">Short retention without backups, and sensitive uploads, are the classic mistakes.</div>
+      </div>
+      <figure class="shot col wide" tabindex="0"><img src="img/artifacts-ui.png" alt="Artifacts page" data-cap="Artifacts: buckets sidebar on the left, file table on the right"><figcaption>Buckets on the left, files on the right</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" data-st="6" data-checkpoint="6" data-title="6 · Checkpoint">
+    <div class="kicker"><b>Checkpoint 6</b> Collaboration</div>
+    <h2>Last two questions</h2>
+    <div class="quiz">
+      <div class="q" data-why="Viewers are read-only. An Editor or Admin makes the change.">
+        <p class="t">Can a Viewer fix a typo in a shared agent?</p>
+        <div class="opts"><button class="opt">Yes, always</button><button class="opt" data-ok>No, Viewers are read-only</button><button class="opt">Only in a Public chat</button></div>
+        <div class="hint">Viewers can use content but not modify it.</div><div class="why"></div>
+      </div>
+      <div class="q" data-why="External links are secure and read-only; you can revoke them.">
+        <p class="t">You need to show a chat to someone outside ELITEA. Use…</p>
+        <div class="opts"><button class="opt">Make the chat public</button><button class="opt" data-ok>An external read-only share link</button><button class="opt">Invite them as Admin</button></div>
+        <div class="hint">Which option is safest and read-only?</div><div class="why"></div>
+      </div>
+    </div>
+    <div class="reward"><div class="stamp">6</div><div class="rtext">Stamp 6 locked. Answer both questions.</div></div>
+  </section>
+
+  <!-- ============ FINISH ============ -->
+  <section class="slide" data-st="0" data-title="Finish" id="finish">
+    <div class="kicker">Finish line</div>
+    <h2 id="fin-h">Key takeaways</h2>
+    <p class="muted" id="fin-sub" style="font-size:17px"></p>
+    <div class="body">
+      <div class="col wide">
+        <ul class="list">
+          <li>Chat is the entry point; modules add power only when needed.</li>
+          <li>Skills hold reusable behaviour; agents combine goals, tools and skills.</li>
+          <li>Build with AI gives a solid draft in minutes. Review before you save.</li>
+          <li>Integrations: credential &rarr; toolkit &rarr; agent. Fewest tools possible.</li>
+          <li>Share deliberately: right project, right role, no hardcoded secrets.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="card hl"><h3>Next steps</h3><ul class="list sm"><li>Ship your meeting follow-up agent to the team</li><li>Explore Pipelines and MCPs</li><li>Read <code>docs.elitea.ai</code></li></ul></div>
+        <button class="btn ghost" id="restart">Back to the map</button>
+        <button class="btn ghost" id="reset" style="font-size:14px;padding:10px 18px">Reset progress</button>
+      </div>
+    </div>
+  </section>
+
+ </div>
+</div>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Enlarged screenshot"><button aria-label="Close">&times;</button><img alt=""><p></p></div>
+
+<div id="bottom">
+  <div id="progress" title="Click to jump"><div id="bar"></div></div>
+  <div id="controls">
+    <button class="cbtn" id="prev">&larr; Back</button>
+    <button class="cbtn" id="mapbtn">Map</button>
+    <div class="where" id="where"></div>
+    <span id="counter"></span>
+    <button class="cbtn go" id="next">Next &rarr;</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var N = slides.length, cur = 0;
+  var stage = document.getElementById('stage');
+  var STATIONS = ['', 'What is ELITEA?', 'Chat & modules', 'Skills', 'Agents', 'Integrations', 'Collaboration'];
+  var TAGS = ['', 'Blocks, login, projects', 'Toolbar, files, modules', 'Build with AI', 'Build with AI', 'Credential → toolkit', 'Roles, publish, artifacts'];
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem('elitea-quest') || '{}'); } catch (e) {}
+  function save() { try { localStorage.setItem('elitea-quest', JSON.stringify(done)); } catch (e) {} }
+
+  /* ----- scale stage to viewport ----- */
+  function fit() {
+    var vp = document.getElementById('viewport');
+    var s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+    stage.style.left = Math.max(0, (vp.clientWidth - 1280 * s) / 2) + 'px';
+    stage.style.top = Math.max(0, (vp.clientHeight - 720 * s) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  /* ----- path bar ----- */
+  var trail = document.getElementById('trail');
+  (function () {
+    var html = '';
+    for (var i = 1; i <= 6; i++) {
+      html += '<button class="pip" data-go="' + i + '"><i>' + i + '</i><span>' + STATIONS[i] + '</span></button>';
+      if (i < 6) html += '<span class="seg" data-seg="' + i + '"></span>';
+    }
+    trail.innerHTML = html;
+  })();
+  function paintTrail(st) {
+    trail.querySelectorAll('.pip').forEach(function (p) {
+      var k = +p.dataset.go;
+      p.classList.toggle('done', !!done[k]);
+      p.classList.toggle('now', k === st);
+      p.querySelector('i').textContent = done[k] ? '✓' : k;
+      p.querySelector('span').style.display = k === st ? '' : 'none';
+    });
+    trail.querySelectorAll('.seg').forEach(function (s) { s.classList.toggle('done', !!done[+s.dataset.seg]); });
+  }
+  trail.addEventListener('click', function (e) { var b = e.target.closest('.pip'); if (b) jumpStation(+b.dataset.go); });
+
+  function firstOf(st) { for (var i = 0; i < N; i++) if (+slides[i].dataset.st === st) return i; return 0; }
+  function jumpStation(st) { go(firstOf(st)); }
+
+  /* ----- map ----- */
+  var board = document.getElementById('board');
+  var POS = [null, [130, 120], [584, 120], [1038, 120], [1038, 350], [584, 350], [130, 350]];
+  var W = 1168, H = 470;
+  (function () {
+    var h = '<div class="flag start" style="left:' + (130 / W * 100) + '%;top:' + ((120 - 62) / H * 100) + '%">START</div>';
+    h += '<div class="flag fin" id="finflag" style="left:' + (130 / W * 100) + '%;top:' + ((350 + 62) / H * 100) + '%">FINISH</div>';
+    for (var i = 1; i <= 6; i++) {
+      h += '<button class="node" data-go="' + i + '" style="left:' + (POS[i][0] / W * 100) + '%;top:' + (POS[i][1] / H * 100) + '%"><span class="n">' + i + '</span><strong>' + STATIONS[i] + '</strong><span class="t">' + TAGS[i] + '</span></button>';
+    }
+    h += '<div class="pawn" id="pawn"></div>';
+    board.insertAdjacentHTML('beforeend', h);
+    board.addEventListener('click', function (e) { var n = e.target.closest('.node'); if (n) jumpStation(+n.dataset.go); });
+  })();
+  function paintBoard() {
+    var next = 0, c = 0;
+    for (var i = 1; i <= 6; i++) { if (done[i]) c++; else if (!next) next = i; }
+    board.querySelectorAll('.node').forEach(function (n) {
+      var k = +n.dataset.go;
+      n.classList.toggle('done', !!done[k]);
+      n.classList.toggle('next', k === next);
+      n.querySelector('.n').textContent = done[k] ? '✓' : k;
+    });
+    var tgt = next ? [POS[next][0], POS[next][1] + 70] : [130, 412];
+    var p = document.getElementById('pawn');
+    p.style.left = (tgt[0] / W * 100) + '%'; p.style.top = (tgt[1] / H * 100) + '%';
+    document.getElementById('pathdone').style.strokeDashoffset = 1000 - Math.round(c / 6 * 1000);
+    var ff = document.getElementById('finflag'); ff.classList.toggle('won', c === 6); ff.textContent = c === 6 ? 'FINISHED' : 'FINISH';
+    document.getElementById('fin-sub').textContent = c === 6 ? 'All six stamps collected. Well played.' : (c + ' of 6 stamps collected. Revisit the map to pick up the rest.');
+    document.getElementById('fin-h').innerHTML = c === 6 ? 'You made it. <span class="grad">Key takeaways</span>' : 'Key takeaways';
+  }
+
+  /* ----- navigation ----- */
+  function go(i) {
+    i = Math.max(0, Math.min(N - 1, i));
+    slides.forEach(function (s, k) { s.classList.toggle('active', k === i); s.classList.toggle('before', k < i); });
+    cur = i;
+    document.querySelectorAll('video').forEach(function (v) { if (!slides[i].contains(v)) v.pause(); });
+    var s = slides[i], st = +s.dataset.st;
+    document.getElementById('pathbar').classList.toggle('hide', st === 0);
+    paintTrail(st); paintBoard();
+    document.getElementById('bar').style.width = (N > 1 ? i / (N - 1) * 100 : 100) + '%';
+    document.getElementById('counter').textContent = (i + 1) + ' / ' + N;
+    document.getElementById('where').innerHTML = st ? '<b>Station ' + st + ':</b> ' + STATIONS[st] + ' &middot; ' + s.dataset.title.replace(/^\d · /, '') : '<b>' + s.dataset.title + '</b>';
+    document.getElementById('prev').disabled = i === 0;
+    document.getElementById('next').disabled = i === N - 1;
+    var cp = s.dataset.checkpoint;
+    document.getElementById('next').classList.toggle('pulse', !!cp && !!done[cp]);
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+  }
+  function next() { go(cur + 1); } function prev() { go(cur - 1); }
+  var mapIdx = slides.indexOf(document.getElementById('mapslide'));
+  document.getElementById('next').onclick = next; document.getElementById('prev').onclick = prev;
+  document.getElementById('mapbtn').onclick = function () { go(mapIdx); };
+  document.getElementById('restart').onclick = function () { go(mapIdx); };
+  document.getElementById('reset').onclick = function () { done = {}; save(); resetQuizzes(); go(mapIdx); };
+  document.querySelectorAll('[data-next]').forEach(function (b) { b.onclick = next; });
+  document.getElementById('progress').addEventListener('click', function (e) {
+    var r = this.getBoundingClientRect(); go(Math.round((e.clientX - r.left) / r.width * (N - 1)));
+  });
+
+  /* progress-bar ticks at the start of each station */
+  (function () {
+    var seen = {};
+    slides.forEach(function (s, i) { var st = +s.dataset.st; if (st && !seen[st]) { seen[st] = 1; var t = document.createElement('div'); t.className = 'tick'; t.style.left = (i / (N - 1) * 100) + '%'; document.getElementById('progress').appendChild(t); } });
+  })();
+
+  /* ----- tabs ----- */
+  document.querySelectorAll('[data-tabs]').forEach(function (box) {
+    var scope = box.parentNode;
+    box.addEventListener('click', function (e) {
+      var t = e.target.closest('.tab'); if (!t) return;
+      box.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === t); });
+      scope.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('on', p.id === t.dataset.p); });
+    });
+  });
+
+  /* ----- checkpoints ----- */
+  function setReward(sl, ok) {
+    var r = sl.querySelector('.reward'); if (!r) return;
+    r.classList.toggle('got', ok);
+    r.querySelector('.rtext').innerHTML = ok ? '<b>Stamp ' + sl.dataset.checkpoint + ' collected!</b> Press Next to move your pawn.' : 'Stamp ' + sl.dataset.checkpoint + ' locked. Answer both questions.';
+    r.querySelector('.stamp').textContent = ok ? '✓' : sl.dataset.checkpoint;
+  }
+  function resetQuizzes() {
+    document.querySelectorAll('[data-checkpoint]').forEach(function (sl) {
+      sl.querySelectorAll('.q').forEach(function (q) {
+        q.classList.remove('ok', 'miss');
+        q.querySelectorAll('.opt').forEach(function (o) { o.classList.remove('good', 'bad'); o.disabled = false; });
+      });
+      setReward(sl, false);
+    });
+  }
+  document.querySelectorAll('[data-checkpoint]').forEach(function (sl) {
+    var cp = sl.dataset.checkpoint;
+    sl.querySelectorAll('.q').forEach(function (q) {
+      q.querySelector('.why').textContent = '✓ ' + q.dataset.why;
+      q.addEventListener('click', function (e) {
+        var o = e.target.closest('.opt'); if (!o || o.disabled || q.classList.contains('ok')) return;
+        if (o.hasAttribute('data-ok')) {
+          o.classList.add('good'); q.classList.add('ok'); q.classList.remove('miss');
+          q.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; });
+          if (sl.querySelectorAll('.q.ok').length === sl.querySelectorAll('.q').length) {
+            done[cp] = true; save(); setReward(sl, true); paintTrail(+sl.dataset.st); paintBoard();
+            document.getElementById('next').classList.add('pulse');
+          }
+        } else { o.classList.add('bad'); q.classList.add('miss'); setTimeout(function () { o.classList.remove('bad'); }, 600); }
+      });
+    });
+    if (done[cp]) {
+      sl.querySelectorAll('.q').forEach(function (q) { q.classList.add('ok'); q.querySelector('[data-ok]').classList.add('good'); q.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; }); });
+      setReward(sl, true);
+    }
+  });
+
+  /* ----- lightbox ----- */
+  var lb = document.getElementById('lb'), lbImg = lb.querySelector('img'), lbCap = lb.querySelector('p');
+  function openLb(fig) {
+    var im = fig.querySelector('img');
+    lbImg.src = im.currentSrc || im.src; lbImg.alt = im.alt;
+    lbCap.textContent = im.dataset.cap || im.alt;
+    lb.classList.add('open');
+  }
+  function closeLb() { lb.classList.remove('open'); }
+  stage.addEventListener('click', function (e) { var f = e.target.closest('figure.shot'); if (f) openLb(f); });
+  stage.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('figure.shot')) { e.preventDefault(); openLb(e.target); } });
+  lb.addEventListener('click', closeLb);
+
+  /* ----- keyboard ----- */
+  document.addEventListener('keydown', function (e) {
+    if (lb.classList.contains('open')) { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') closeLb(); return; }
+    if (e.target.tagName === 'VIDEO' && e.key === ' ') return; /* let Space play/pause the video */
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(N - 1);
+    else if (e.key === 'm' || e.key === 'M') go(mapIdx);
+  });
+
+  function fromHash() { var h = parseInt((location.hash || '').slice(1), 10); return h > 0 && h <= N ? h - 1 : 0; }
+  window.addEventListener('hashchange', function () { var t = fromHash(); if (t !== cur) go(t); });
+  go(fromHash());
+})();
+</script>
+</body>
+</html>
