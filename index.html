@@ -31,6 +31,9 @@
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
   body { display: flex; flex-direction: column; }
   button { font: inherit; color: inherit; cursor: pointer; }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { color: var(--cyan-2); text-decoration: underline; }
+  code a { color: inherit; }
   code { font-family: 'JetBrains Mono', monospace; font-size: .86em; padding: 1px 7px; border-radius: 6px; background: #0c0d10; border: 1px solid var(--line); color: var(--cyan); white-space: nowrap; }
 
   /* ---------- viewport + scaled stage ---------- */
@@ -300,6 +303,7 @@
           <li>Use the <b>Project Selector</b> in the sidebar to switch from Public to Private.</li>
           <li>Click the ELITEA icon (top left) to open all menus.</li>
         </ol>
+        <div class="callout" style="margin-bottom:14px"><b>Note:</b> your personal Private space is created automatically on your first login. This may take some time, so please be patient.</div>
         <div class="mission"><b>Mission</b>Log in, switch to Private, and find Chat, Agents, Skills, Toolkits &amp; Indexes and Artifacts.</div>
       </div>
       <div class="col">
