@@ -116,7 +116,8 @@
 
   /* ---------- intro video ---------- */
   .vid-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
-  .vid-head .btn { font-size: 15px; padding: 10px 22px; white-space: nowrap; }
+  .vid-cta { display: flex; justify-content: center; margin-top: 18px; }
+  .btn.big { font-size: 22px; padding: 18px 44px; white-space: nowrap; box-shadow: 0 0 36px rgba(83,226,251,.35), 0 0 70px rgba(203,56,189,.2); }
   .vid-wrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; margin-top: 14px; }
   .vid-frame { height: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 0 70px rgba(65,141,255,.2), 0 0 120px rgba(203,56,189,.12); }
   .vid-frame video { width: 100%; height: 100%; display: block; object-fit: contain; }
@@ -223,7 +224,6 @@
         <div class="kicker">Before we start &middot; 2 min</div>
         <h2 style="margin:0">Enbridge &times; ELITEA: <span class="grad">AI governance in action</span></h2>
       </div>
-      <button class="btn ghost" data-next>Skip to the quest &rarr;</button>
     </div>
     <div class="vid-wrap">
       <div class="vid-frame">
@@ -233,6 +233,7 @@
         </video>
       </div>
     </div>
+    <div class="vid-cta"><button class="btn big" data-next>Go directly to the ELITEA Quest &rarr;</button></div>
   </section>
 
   <!-- ============ 0 · TITLE ============ -->
